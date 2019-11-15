@@ -1,0 +1,102 @@
+---
+title: "Spatial"
+author: "Anna Vasylytsya"
+date: "11/9/2019"
+output: 
+  html_document:
+    code_hide: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE, message = FALSE)
+```
+
+```{r load_packages}
+library(rgdal)
+library(raster)
+library(rgeos)
+library(leaflet)
+#library(tmap)
+```
+
+```{r proj_path, include = FALSE}
+proj_path <- "C:/Users/Anna V/Documents/GitHub/exploring_spatial_data"
+```
+
+```{r load_data}
+sa_cntries <- readOGR(paste0(proj_path, "/data/south_america_shp/SouthAmerica.shp"))
+#print(sa_cntries)
+
+##sa_roads <- readOGR(paste0(proj_path, "/data/road_shp/GRIP4_region2.shp")) # kind of large, a lot of road segments
+sa_roads <- readOGR(paste0(proj_path, "/data/road_shp/sa_highway_primary.shp")) 
+#print(sa_roads)
+
+pop17 <- raster(paste0(proj_path, "/data/pop17_tif/ppp_2017_1km_Aggregated.tif"))
+#print(pop17)
+```
+
+### Check Coordinate Reference Systems
+The crs for sa_countries is: `r print(crs(sa_cntries))`
+The crs for pop17 is: `r print(crs(pop17))`
+The crs for sa_roads is: `r print(crs(sa_roads))`
+They match! They are all WGS1984.
+
+## base::plot
+```{r base_plot, fig.height=7, fig.width=14}
+plot(pop17)
+plot(sa_cntries, add = TRUE)
+```
+
+As you noticed above, the population raster is of the whole world. We can crop it just to South America or a particular country. We need two functions from the raster package to do this 1) crop - which crops the extent (i.e. bounding box) and 2) mask - which crops to be shapefile boundary. 
+
+For this example, I will focus on Bolivia. First, we need to subset the countries shapefile to Bolivia.
+
+```{r bol_shp}
+# the shapefile has a dataframe, so we subset just like we would a dataframe. 
+#View(sa_cntries@data)
+bol <- sa_cntries[sa_cntries$Name == "BOLIVIA", ]
+```
+
+```{r crop_pop}
+bol_pop17 <- raster::crop(pop17, bol)
+bol_pop17 <- raster::mask(bol_pop17, bol) # note: you are replacing the bol_pop17 object here!
+```
+
+```{r bol_pop_plot}
+plot(bol_pop17, colNA = "purple", main = "Bolivia Population 2017") 
+#color NA areas with red, these are likely waterbodies or parks
+plot(bol, add = TRUE)
+```
+
+We can also crop all of the road segments to Bolivia and write them into a new shapefile.
+```{r crop_roads}
+bol_roads <- raster::crop(sa_roads, bol)
+# write the cropped roads to a shapefile
+writeOGR(bol_roads, paste0(proj_path, "/data/road_shp/bolivia_highway_primary.shp"), 
+         layer = "bolivia_highway_primary", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+```
+
+We can plot the roads in base::plot and colors the road segments by attribute. 
+```{r base_plot_roads}
+plot(bol_roads, col=sa_roads$GP_RTP)
+```
+
+
+```{r leaflet_pop}
+pal <- colorBin(c("#FFFFCC", "#41B6C4", "#0C2C84"), values(bol_pop17), 
+                bins = 3, pretty = FALSE, na.color = "transparent")
+
+leaflet() %>% 
+  addTiles() %>%
+  addRasterImage(bol_pop17, colors = pal, opacity = 0.75) %>%
+  addLegend(pal = pal, values = round(values(bol_pop17), digit = 0), title = "Population 2017")
+
+```
+
+```{r tmap_pop}
+# tmap_mode("view")
+# 
+# tm_basemap("OpenStreetMap") + 
+#   tm_borders(sa_cntries, name = "countries", bbox = bbox(sa_cntries)) 
+#   # tm_raster(pop17, palette = pal, alpha = 0.75)
+```
