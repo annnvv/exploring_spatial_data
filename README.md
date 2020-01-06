@@ -1,5 +1,7 @@
 # exploring_maps
 
+Exploring various spatial packages and functions in R.
+
 ## **Data Sources**
 *South America Countries Shapefile*: U.S. Department of State, Office of the Geographer. (2013). Detailed World Polygons (LSIB), South America, 2013. U.S. Department of State. Humanitarian Information Unit. Available at: http://purl.stanford.edu/vc965bq8111.
 
