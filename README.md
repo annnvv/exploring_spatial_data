@@ -1,6 +1,6 @@
-# exploring_maps
+Status: Work in Progress
 
-Exploring various spatial packages and functions in R.
+Purpose: Exploring various spatial packages and functions in R.
 
 ## **Data Sources**
 *South America Countries Shapefile*: U.S. Department of State, Office of the Geographer. (2013). Detailed World Polygons (LSIB), South America, 2013. U.S. Department of State. Humanitarian Information Unit. Available at: http://purl.stanford.edu/vc965bq8111.
@@ -9,5 +9,3 @@ Exploring various spatial packages and functions in R.
 https://www.worldpop.org/geodata/listing?id=62
 
 *South America Roads Shapefile*: Meijer, J.R., Huijbegts, M.A.J., Schotten, C.G.J. and Schipper, A.M. (2018): Global patterns of current and future road infrastructure. Environmental Research Letters, 13-064006. Data is available at www.globio.info
-
-
