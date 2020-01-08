@@ -1,7 +1,7 @@
 ---
-title: "Spatial"
+title: "Exploring Spatial Data"
 author: "Anna Vasylytsya"
-date: "11/9/2019"
+date: "01/09/2020"
 output: 
   html_document:
     code_hide: TRUE
@@ -12,11 +12,10 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error = FALSE, message = FAL
 ```
 
 ```{r load_packages}
-library(rgdal)
-library(raster)
-library(rgeos)
-library(leaflet)
-#library(tmap)
+library(rgdal) # used here for reading and writing shapefiles
+library(raster) # for reading, writing, and raster operation/manipulation
+library(leaflet) # interactive maps of spatial data
+library(tmap) # interactive maps of spatial data
 ```
 
 ```{r proj_path, include = FALSE}
@@ -25,20 +24,19 @@ proj_path <- "C:/Users/Anna V/Documents/GitHub/exploring_spatial_data"
 
 ```{r load_data}
 sa_cntries <- readOGR(paste0(proj_path, "/data/south_america_shp/SouthAmerica.shp"))
-#print(sa_cntries)
-
-##sa_roads <- readOGR(paste0(proj_path, "/data/road_shp/GRIP4_region2.shp")) # kind of large, a lot of road segments
+##sa_roads <- readOGR(paste0(proj_path, "/data/road_shp/GRIP4_region2.shp")) 
+# a rather large file, a lot of road segments
 sa_roads <- readOGR(paste0(proj_path, "/data/road_shp/sa_highway_primary.shp")) 
-#print(sa_roads)
-
 pop17 <- raster(paste0(proj_path, "/data/pop17_tif/ppp_2017_1km_Aggregated.tif"))
-#print(pop17)
 ```
 
 ### Check Coordinate Reference Systems
 The crs for sa_countries is: `r print(crs(sa_cntries))`
+
 The crs for pop17 is: `r print(crs(pop17))`
+
 The crs for sa_roads is: `r print(crs(sa_roads))`
+
 They match! They are all WGS1984.
 
 ## base::plot
@@ -57,6 +55,8 @@ For this example, I will focus on Bolivia. First, we need to subset the countrie
 bol <- sa_cntries[sa_cntries$Name == "BOLIVIA", ]
 ```
 
+### Cropping and masking a raster file
+Using the raster package, the crop function only crops the extent of the raster (in other words, the outer edges of the rectangle that can hold the Bolivia shapefile). Mask does what people normally call crop, which is only keep the parts of the raster that are within the boundary of the shapefile.
 ```{r crop_pop}
 bol_pop17 <- raster::crop(pop17, bol)
 bol_pop17 <- raster::mask(bol_pop17, bol) # note: you are replacing the bol_pop17 object here!
@@ -64,35 +64,48 @@ bol_pop17 <- raster::mask(bol_pop17, bol) # note: you are replacing the bol_pop1
 
 ```{r bol_pop_plot}
 plot(bol_pop17, colNA = "purple", main = "Bolivia Population 2017") 
-#color NA areas with red, these are likely waterbodies or parks
+#color NA areas with purple, purple areas within Bolivia are likely waterbodies or parks
 plot(bol, add = TRUE)
 ```
 
+### Cropping a shapefile
 We can also crop all of the road segments to Bolivia and write them into a new shapefile.
 ```{r crop_roads}
 bol_roads <- raster::crop(sa_roads, bol)
-# write the cropped roads to a shapefile
-writeOGR(bol_roads, paste0(proj_path, "/data/road_shp/bolivia_highway_primary.shp"), 
-         layer = "bolivia_highway_primary", driver = "ESRI Shapefile", overwrite_layer = TRUE)
+# # write the cropped roads to a shapefile
+# writeOGR(bol_roads, paste0(proj_path, "/data/road_shp/bolivia_highway_primary.shp"), 
+#          layer = "bolivia_highway_primary", driver = "ESRI Shapefile", overwrite_layer = TRUE)
 ```
 
-We can plot the roads in base::plot and colors the road segments by attribute. 
-```{r base_plot_roads}
+```{r base_plot_roads, include = FALSE}
+#We can plot the roads in base::plot and colors the road segments by attribute. 
 plot(bol_roads, col=sa_roads$GP_RTP)
 ```
 
+## leaflet
+We plot Bolivia's population and roads together using the leaflet package. When we do this, we see that the major roads connect densely populated cities.
 
+Also, when we zoom in closer, it is noticable that the road segments are not precise (particularly when compared to the basemap roads).
 ```{r leaflet_pop}
 pal <- colorBin(c("#FFFFCC", "#41B6C4", "#0C2C84"), values(bol_pop17), 
                 bins = 3, pretty = FALSE, na.color = "transparent")
 
 leaflet() %>% 
-  addTiles() %>%
-  addRasterImage(bol_pop17, colors = pal, opacity = 0.75) %>%
-  addLegend(pal = pal, values = round(values(bol_pop17), digit = 0), title = "Population 2017")
-
+  setView(lng = -64.4887, lat = -17.6902, zoom = 6) %>% 
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+    # I like using the basemap because the colors are quite muted (allows the raster colors to pop)
+  addRasterImage(bol_pop17, colors = pal, opacity = 0.55, group = "pop") %>%
+  addLegend(pal = pal, values = round(values(bol_pop17), digit = 0), title = "Population 2017") %>%
+  addPolygons(data = bol_roads, fill = FALSE, color = "#444444", opacity = 0.60, weight = 0.4,
+              smoothFactor = 0.5, group = "roads",
+              highlightOptions = highlightOptions(color = "black", weight = 1, bringToFront = TRUE)) %>%
+  addLayersControl(#baseGroups = c(),
+                   overlayGroups = c("pop", "roads"), options = layersControlOptions(collapsed = FALSE)
+  )
 ```
+## tmap
 
+Work in Progress: exploring the tmap package
 ```{r tmap_pop}
 # tmap_mode("view")
 # 
