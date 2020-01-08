@@ -85,7 +85,7 @@ plot(bol_roads, col=sa_roads$GP_RTP)
 ## leaflet
 We plot Bolivia's population and roads together using the leaflet package. When we do this, we see that the major roads connect densely populated cities.
 
-Also, when we zoom in closer, it is noticable that the road segments are not precise (particularly when compared to the basemap roads).
+Also, when we zoom in closer, it is noticable that the road segments are not precise and/or duplicated (particularly when compared to the basemap roads).
 ```{r leaflet_pop}
 pal <- colorBin(c("#FFFFCC", "#41B6C4", "#0C2C84"), values(bol_pop17), 
                 bins = 3, pretty = FALSE, na.color = "transparent")
