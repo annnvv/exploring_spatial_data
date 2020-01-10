@@ -1,7 +1,8 @@
 Status: Work in Progress
 
-Purpose: Exploring various spatial packages and functions in R.
-For knit version of the R markdown: https://annnvv.github.io/exploring_spatial_data/analysis/
+**Purpose**: Exploring various spatial packages and functions in R.
+
+For knit version of the analysis R markdown: https://annnvv.github.io/exploring_spatial_data/analysis/
 
 ## **Data Sources**
 *South America Countries Shapefile*: U.S. Department of State, Office of the Geographer. (2013). Detailed World Polygons (LSIB), South America, 2013. U.S. Department of State. Humanitarian Information Unit. Available at: http://purl.stanford.edu/vc965bq8111.
